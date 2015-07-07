@@ -1,0 +1,378 @@
+﻿<!DOCTYPE HTML PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    <title>18F Prototype</title>
+    <script type="text/javascript" src="Scripts/jquery.min.js"></script>
+    <script type="text/javascript" src="Scripts/jquery.unobtrusive-ajax.js"></script>
+    <script type="text/javascript" src="Scripts/bootstrap.min.js"></script>
+    <script type="text/javascript" src="Scripts/Drug.UnitTest.js"></script>
+    <link href="Content/bootstrap.min.css" type="text/css" rel="stylesheet" />
+    <link href="Content/bootstrap-theme.min.css" type="text/css" rel="stylesheet" />
+    <link rel="stylesheet" type="text/css" href="Content/font-awesome.min.css" />  
+    <script type="text/javascript">
+     function IsValid() {
+              if ($('#txtSearch').val() == "") {
+                  return false;
+              } else {
+                  return true;
+              }
+          }
+    function SearchDrug() {
+        if(IsValid()){
+            CallApi($('#txtSearch').val());
+            if ($('#hdnErrorResult').val() != "") {
+                DiplayError();
+            }
+        }
+        else{
+            $('#tblError').show(); $('.tblResult').hide();
+            $('#lblMessage').show(); $('#lblMessage').text('Search value cannot be empty!');
+        }       
+    }
+    $(document).keypress(function (e) {
+        if (e.keyCode == 13) {            
+            SearchDrug();
+        }
+    });
+    function CallApi(searchValue) {
+        $.ajax({
+            url: 'http://api.fda.gov/drug/event.json?api_key=fWh0obWpVFaBBNvdpFZYqQBMszwc7nKJY9wKxEJb&search=' + searchValue,
+            cache: true,
+            type: 'GET',
+            dataType: "json",
+            crossDomain: true,
+            processData: true,
+        }).done(function (data) {
+            DisplayResult(data);
+            $('#hdnErrorResult').val('');
+            $('#hdnStatus').val('');
+            $('#hdnSuccess').val('yes');
+        }).error(function (data) {
+           $('#hdnStatus').val(data.status);
+            var result = JSON.parse(data.responseText);
+            $('#hdnErrorResult').val(result.error.message);
+            $('#hdnSuccess').val('no');
+        });
+    }
+    function DisplayResult(data) {
+        $(data.results).each(function (index, el) {
+            $('#lblSafetyReportId').text(el.safetyreportid);
+            if (el.receiver == null) {
+            } else {
+                $('#lblReceiverOrganisation').text(el.receiver.receiverorganization);
+            }
+            $('#lblSenderOrganisation').text(el.sender.senderorganization);
+            $('#lblCompanyNumber').text(el.companynumb);
+            $("#tbdyReaction").html('');
+            $(el.patient.reaction).each(function (i, item) {
+                var patient = $('#trHiddenRowForReaction').clone(true);
+                $(patient).find("#tdReactionDraft").text(item.reactionmeddrapt);
+                $(patient).find('#tdReactionVersionDrapt').text(item.reactionmeddraversionpt);
+                $(patient).find('#tdReactionOutcome').text(item.reactionoutcome);
+                $("#tbdyReaction").append(patient);
+            });
+            $('#tbdyDrug').html('');
+            $(el.patient.drug).each(function (it, value) {
+                var drug = $('#trHiddenRow').clone(true);
+                $(drug).find('#tdAuthorizationNumber').text(value.drugauthorizationnumb);
+                $(drug).find('#tdIndication').text(value.drugindication);
+                $(drug).find('#tdDosageText').text(value.drugdosagetext);
+                $(drug).find('#tdDrugStructure').text(value.drugstructuredosageunit);
+                $(drug).find('#tdDosageForm').text(value.drugdosageform);
+                $('#tbdyDrug').append(drug);
+            });
+        });
+        $('#tblError').hide(); $('.tblResult').show();
+    }
+    function DiplayError(data) {
+         $('#tblError').show(); $('.tblResult').hide();
+        $('#lblMessage').text($('#hdnErrorResult').val());
+        $('#lblMessage').show();
+    }
+    </script>
+
+</head>
+
+<body>
+        <input type="hidden" id="hdnErrorResult" />
+        <input type="hidden" id="hdnSuccess" />
+        <input type="hidden" id="hdnStatus" />
+    <section id="Header">
+        <div style="border-bottom: 1px solid rgb(100, 100, 100);" class="container-fluid hhs-masthead">
+            <div class="container">
+                <!-- first row -->
+                <div class="row hhs-masthead">
+                    <div class="col-md-12 col-lg-12 topblackustext">
+                        <a title="U.S. Department of Health and Human Services"></a>
+                    </div>
+                </div>
+                <!--/ first row -->
+            </div>
+        </div>
+        <div class="container-fluid bluebgfulllength">
+            <div class="container no-padding">
+                <!-- Second row -->
+                <div class="col-xs-12 col-sm-12 col-md-12 col-lg-12 no-padding">
+
+                    <div class="col-xs-12 col-sm-10 col-md-10 col-lg-11 no-padding">
+                        <div class="col-xs-5 col-sm-3 col-md-2 fda-logo no-padding">
+                            <a href="#" title="FDA Homepage" class="gov-webicon fda white"></a>
+                        </div>
+                        <div class="col-xs-7 col-sm-8 col-md-10 col-lg-7 fda-name no-padding">
+                            <h1>U.S. Food and Drug Administration</h1>
+                            <p class="visible-md visible-lg fda-tagline">Protecting and Promoting <em>Your</em> Health</p>
+                        </div>
+                    </div>
+                    <div class="col-xs-12 col-sm-2 col-md-2 col-lg-1 no-padding">
+                       <div class="no-padding text-right">
+                            <img alt="" src="images/18flogo.jpg" class="eighteenfinvisible">
+                        </div>
+                    </div>
+
+                </div>
+                <!--/ second row -->
+            </div>
+        </div>
+    </section>
+
+
+    <section id="table">
+        <div class="container-fluid" id="outerwrapper">
+            <div class="container tableleftright" style="height: auto;">
+                <div class="row" id="row">
+                    <div class="col-md-12 col-lg-12 no-padding">
+
+
+                        <div class="col-md-12 col-lg-12 crumbs-container">
+                            <ul class="breadcrumb contentpage margin-top20">
+                                <li><a href="#">Home</a></li>
+                                <li class="secondLast"><a href="#">Drug</a></li>
+                            </ul>
+                        </div>
+
+
+
+                        <div class="row">
+                            <div class="col-lg-12">
+                                <div class="col-lg-12 col-xs-12">
+                                    <h2>Drug Information</h2>
+                                </div>
+                                <div class="col-lg-12 col-xs-12 no-padding">
+                                  
+                                        <div class="form-group col-lg-12 col-sm-12 col-md-12">
+                                            <label for="email">Drug:</label>
+                                            <div class="input-group col-lg-12 col-sm-12 col-xs-12">
+                                                <input tabindex="1" type="text" placeholder="Search…" class="form-control" id="txtSearch" />
+                                                <span style="width:70px;" class="input-group-btn">
+                                                       <input tabindex="2" type="button" class="btn btn-default" value="Search" id="btnSearch" onclick="SearchDrug();" />
+                                                </span>                                              
+                                            </div>
+                                        </div>
+                                    
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="col-lg-12 paddingtopbot">
+                            <table id="tblError" border="0" cellpadding="0" cellspacing="0">
+                                <tr>
+                                    <td>
+                                        <label id="lblMessage" style="color:red; display:none;"></label>
+                                    </td>
+                                </tr>
+                            </table>
+                        </div>
+
+
+
+
+
+
+
+
+
+
+
+
+
+                        <div class="col-lg-12 paddingtopbot">
+                            <div class="panel panel-default tblResult" style="display:none;">
+                                <div class="panel-heading">
+                                    Details
+                                </div>
+                                <!-- /.panel-heading -->
+                                <div class="panel-body">
+                                    <div class="list-group">
+                                        <a class="list-group-item" href="#">
+                                            Safety Report Id
+                                        </a>
+                                        <a class="list-group-item" href="#">
+                                            <label id="lblSafetyReportId"></label>
+                                        </a>
+
+                                    </div>
+                                    <div class="list-group">
+                                        <a class="list-group-item" href="#">
+                                            Receiver Organisation
+                                        </a>
+                                        <a class="list-group-item" href="#">
+                                            <label id="lblReceiverOrganisation"></label>
+                                        </a>
+
+                                    </div>
+                                    <div class="list-group">
+                                        <a class="list-group-item" href="#">
+                                            Sender Organisation
+                                        </a>
+                                        <a class="list-group-item" href="#">
+                                            <label id="lblSenderOrganisation"></label>
+                                        </a>
+
+                                    </div>
+
+                                </div>
+                                <!-- /.panel-body -->
+                            </div>
+                        </div>
+
+
+
+
+
+
+
+
+
+
+
+
+                        <div class="col-lg-12 paddingtopbot">
+                            <div class="col-lg-12 no-padding tblResult" style="display:none;">
+                                <div class="panel panel-default">
+                                    <div class="panel-heading">
+                                        Patient Reaction
+                                    </div>
+                                    <!-- /.panel-heading -->
+                                    <div class="panel-body">
+                                        <div class="no-padding">
+                                            <div class="col-md-12 ">
+
+
+                                            </div>
+                                            <div class="col-lg-12 col-sm-12 col-md-12 col-xs-12 no-padding">
+                                                <div class="table-responsive">
+                                                    <table class="table table-bordered table-striped">
+                                                        <thead>
+                                                            <tr class="table-headerimg">
+                                                                <th>Medicine Reaction Drapt</th>
+                                                                <th>Medicine Reaction Drapt Version</th>
+                                                                <th>Reaction Outcome</th>
+                                                            </tr>
+                                                        </thead>
+                                                        <tbody id="tbdyReaction"></tbody>
+                                                    </table>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <!-- /.panel-body -->
+                                </div>
+                            </div>
+                        </div>
+
+
+
+
+
+
+
+
+
+
+
+                        <div class="col-lg-12 paddingtopbot">
+                            <div class="col-lg-12 no-padding tblResult" style="display:none;">
+                                <div class="panel panel-default">
+                                    <div class="panel-heading">
+                                        Patient Drug
+                                    </div>
+                                    <!-- /.panel-heading -->
+                                    <div class="panel-body">
+                                        <div class="no-padding">
+                                            <div class="col-md-12 ">
+
+
+                                            </div>
+                                            <div class="col-lg-12 col-sm-12 col-xs-12 col-md-12 no-padding">
+                                                <div class="table-responsive">
+                                                    <table class="table table-bordered table-striped">
+                                                        <thead>
+                                                            <tr class="table-headerimg">
+                                                                <th>Drug Authorization Number</th>
+                                                                <th>Drug Dosage Text</th>
+                                                                <th>Drug Dosage Form</th>
+                                                                <th>Drug Indication</th>
+                                                                <th>Drug Structure Dosage Unit</th>
+                                                            </tr>
+                                                        </thead>
+                                                        <tbody id="tbdyDrug"></tbody>
+                                                    </table>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <!-- /.panel-body -->
+                                </div>
+                            </div>
+                        </div>
+
+
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+
+    <footer class="container-fluid">
+        <div class="container no-padding tableleftright">
+            <div class="col-lg-12 fda-logo footer-heading" style="height:60px;background-color:#003152;">
+
+                <div class="col-lg-12 copyrht text-center">
+                    <p>&copy; 18F Prototype 2015</p>
+                </div>
+            </div>
+            <div class="footer-content">
+                <div class="col-sm-5 col-md-12 col-lg-6">
+                </div>
+
+            </div>
+        </div>
+    </footer>
+
+    <div id="dummyDiv" style="display:none;">
+        <table border="0" cellpadding="0" cellspacing="0">
+            <tr id="trHiddenRow">
+                <td id="tdAuthorizationNumber"></td>
+                <td id="tdDosageText"></td>
+                <td id="tdDosageForm"></td>
+                <td id="tdIndication"></td>
+                <td id="tdDrugStructure"></td>               
+            </tr>  
+            <tr id="trHiddenRowForReaction">
+                <td id="tdReactionDraft" >
+                    
+                </td>               
+                <td id="tdReactionVersionDrapt" >
+                  
+                </td>
+                <td id="tdReactionOutcome">
+                   
+                </td>
+            </tr>
+        </table>
+    </div>
+
+</body>
+</html>
